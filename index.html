@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Info Hub - Explorador API</title>
+    <link rel="stylesheet" href="styles.css"> 
+</head>
+<body>
+
+    <header>
+        <h1>🌎 Global Info Hub</h1>
+        <p>Explora el mundo: Datos, Clima y Finanzas en tiempo real.</p>
+    </header>
+
+    <main>
+        <section id="search-section">
+            <h2>🔎 Busca un País</h2>
+            <div class="input-group">
+                <input type="text" id="country-input" placeholder="Ej: Colombia, Spain, Japan...">
+                <button id="search-button">Obtener Información</button>
+            </div>
+            <p id="message-area"></p>
+        </section>
+
+        <section id="results-container" class="hidden">
+            
+            <div id="country-header">
+                <h2 id="country-name"></h2> 
+                <img id="country-flag" src="" alt="Bandera del país" width="60"> 
+            </div>
+
+            <div class="info-card basic-data">
+                <h3>Datos Generales</h3>
+                <p><strong>Capital:</strong> <span id="capital"></span></p>
+                <p><strong>Población:</strong> <span id="population"></span></p>
+                <p><strong>Región:</strong> <span id="region"></span></p>
+                <p><strong>Idioma(s) Oficial(es):</strong> <span id="languages"></span></p>
+            </div>
+
+            <div class="info-card weather-data">
+                <h3>🌡️ Clima Actual</h3>
+                <div id="weather-info">
+                    </div>
+            </div>
+
+            <div class="info-card finance-data">
+                <h3>💰 Conversor de Moneda</h3>
+                <p><strong>Moneda Local:</strong> <span id="local-currency"></span></p>
+                <p id="usd-rate-info"></p>
+                <p id="eur-rate-info"></p>
+            </div>
+
+            <div class="info-card news-data">
+                <h3>📰 Noticias Principales</h3>
+                <ul id="news-list">
+                    </ul>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Global Info Hub - Proyecto Beta de Integración de APIs</p>
+    </footer>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
