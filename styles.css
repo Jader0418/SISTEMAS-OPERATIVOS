@@ -91,7 +91,7 @@ main {
 /* --- 4. Contenedor de Resultados --- */
 #results-container {
     display: grid;
-    /* Define 2 columnas para las 4 tarjetas */
+    /* Define 2 columnas */
     grid-template-columns: repeat(2, 1fr); 
     gap: 20px;
 }
@@ -139,26 +139,40 @@ main {
     color: var(--secondary-color);
 }
 
-/* Estilo para las Noticias */
-#news-list {
+/* Estilo para la Lista de Vecinos */
+#neighbors-list {
     list-style: none;
     padding: 0;
 }
 
-#news-list li {
+#neighbors-list li {
     margin-bottom: 10px;
     padding-left: 15px;
     position: relative;
     font-size: 0.95em;
 }
 
-#news-list li::before {
+#neighbors-list li::before {
     content: '→';
     position: absolute;
     left: 0;
     color: var(--primary-color);
     font-weight: bold;
 }
+
+/* Estilo para la tarjeta de relleno (filler) */
+.empty-filler {
+    opacity: 0.7;
+    background-color: #f0f0f0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.empty-filler h3 {
+    color: #343a40;
+}
+
 
 /* --- 5. Elementos de Utilidad --- */
 .hidden {

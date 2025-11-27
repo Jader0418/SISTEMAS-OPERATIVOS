@@ -2,11 +2,9 @@
 // 1. CONFIGURACIÓN INICIAL Y CLAVES
 // =========================================================
 
-// API 2: OpenWeatherMap 
+// API 2: OpenWeatherMap (Clave: f2d870a345ba339f0837e7742677b287)
 const WEATHER_API_KEY = 'f2d870a345ba339f0837e7742677b287'; 
-
-// API 4: News API 
-const NEWS_API_KEY = '7a64cdcae4a94b399abdd2eae6368375'; 
+// La clave de News API fue eliminada y reemplazada por la función de Países Vecinos.
 
 // =========================================================
 // 2. REFERENCIAS DEL DOM Y VARIABLES GLOBALES
@@ -33,8 +31,8 @@ const weatherInfoElement = document.getElementById('weather-info');
 const usdRateInfo = document.getElementById('usd-rate-info');
 const eurRateInfo = document.getElementById('eur-rate-info');
 
-// Elementos donde se inyectarán las NOTICIAS (API 4)
-const newsListElement = document.getElementById('news-list'); 
+// Elementos donde se inyectarán los PAÍSES VECINOS (API 4)
+const neighborsListElement = document.getElementById('news-list'); 
 
 // Variable global para almacenar datos clave
 let currentCountryData = {}; 
@@ -96,7 +94,8 @@ function displayCountryData(country) {
         capital: country.capital ? country.capital[0] : 'N/A',
         currencyCode: currencyCode,
         currencyName: currencyName,
-        countryCode: country.cca2, // Código de 2 letras (esencial para API 2 y 4)
+        countryCode: country.cca2, // Código de 2 letras (esencial para API 2)
+        borders: country.borders || [] // Códigos de las fronteras (esencial para API 4)
     };
 
     // 3. Inyectar en el HTML (API 1)
@@ -116,11 +115,11 @@ function displayCountryData(country) {
     // API 2: CLIMA 
     fetchWeather(currentCountryData.capital, currentCountryData.countryCode);
     
-    // API 3: TASAS DE CAMBIO 
+    // API 3: TASAS DE CAMBIO (Usando Exchangerate.host)
     fetchExchangeRate(currentCountryData.currencyCode); 
 
-    // API 4: NOTICIAS
-    fetchNews(currentCountryData.countryCode); 
+    // API 4: PAÍSES VECINOS
+    fetchNeighbors(currentCountryData.borders); 
 }
 
 // =========================================================
@@ -179,7 +178,7 @@ function displayWeather(data) {
 }
 
 // =========================================================
-// 5. FUNCIÓN DE FINANZAS (API 3: ExchangeRate-API)
+// 5. FUNCIÓN DE FINANZAS (API 3: Exchangerate.host)
 // =========================================================
 
 async function fetchExchangeRate(baseCurrencyCode) {
@@ -187,101 +186,94 @@ async function fetchExchangeRate(baseCurrencyCode) {
     eurRateInfo.textContent = '';
 
     if (!baseCurrencyCode || baseCurrencyCode === 'N/A') {
-        usdRateInfo.textContent = 'Moneda local no definida.';
+        usdRateInfo.textContent = 'Moneda local no definida por Rest Countries API.';
         eurRateInfo.textContent = '';
         return;
     }
     
-    const url = `https://v6.exchangerate-api.com/v6/latest/${baseCurrencyCode}`;
+    // API de Exchangerate.host (Permite http/localhost)
+    const url = `https://api.exchangerate.host/latest?base=${baseCurrencyCode}&symbols=USD,EUR`;
 
     try {
         const response = await fetch(url);
+        
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
+        
         const data = await response.json();
 
-        if (data.result === 'error') {
-            usdRateInfo.textContent = `Error: Moneda ${baseCurrencyCode} inválida o no soportada.`;
-            eurRateInfo.textContent = '';
-            console.error('ExchangeRate API Error:', data['error-type']);
-            return;
+        if (!data.rates || !data.rates.USD || !data.rates.EUR) {
+             usdRateInfo.textContent = `Error: La API no soporta la moneda base ${baseCurrencyCode}.`;
+             eurRateInfo.textContent = '';
+             return;
         }
 
         displayExchangeRates(data);
 
     } catch (error) {
         console.error('Error al obtener la tasa de cambio:', error);
-        usdRateInfo.textContent = `Error al cargar la tasa. Revise su conexión.`;
+        usdRateInfo.textContent = `Error al cargar la tasa para ${baseCurrencyCode}. (${error.message})`;
         eurRateInfo.textContent = '';
     }
 }
 
 function displayExchangeRates(data) {
-    const rates = data.conversion_rates;
+    const rates = data.rates;
     
     const rateToUSD = rates.USD;
     const rateToEUR = rates.EUR;
 
     if (rateToUSD && rateToEUR) {
-        usdRateInfo.innerHTML = `1 ${data.base_code} = <strong>$${rateToUSD.toFixed(2)} USD</strong>`;
-        eurRateInfo.innerHTML = `1 ${data.base_code} = <strong>€${rateToEUR.toFixed(2)} EUR</strong>`;
+        usdRateInfo.innerHTML = `1 ${data.base} = <strong>$${rateToUSD.toFixed(2)} USD</strong>`;
+        eurRateInfo.innerHTML = `1 ${data.base} = <strong>€${rateToEUR.toFixed(2)} EUR</strong>`;
     } else {
         usdRateInfo.textContent = 'Tasas USD/EUR no disponibles.';
         eurRateInfo.textContent = '';
     }
 }
 
+
 // =========================================================
-// 6. FUNCIÓN DE NOTICIAS (API 4: News API)
+// 6. FUNCIÓN DE PAÍSES VECINOS (API 4: Rest Countries API - Fronteras)
 // =========================================================
 
-async function fetchNews(countryCode) {
-    const url = `https://newsapi.org/v2/top-headlines?country=${countryCode.toLowerCase()}&pageSize=5&language=es&apiKey=${NEWS_API_KEY}`;
+async function fetchNeighbors(borders) {
+    neighborsListElement.innerHTML = '';
     
-    newsListElement.innerHTML = '<li>Cargando noticias...</li>';
+    if (!borders || borders.length === 0) {
+        neighborsListElement.innerHTML = '<li>Este país no tiene fronteras terrestres.</li>';
+        return;
+    }
+
+    const borderCodes = borders.join(',');
+    const url = `https://restcountries.com/v3.1/alpha?codes=${borderCodes}`;
+
+    neighborsListElement.innerHTML = '<li>Cargando países vecinos...</li>';
 
     try {
         const response = await fetch(url);
-        
         if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error('News API: Clave inválida o inactiva (Error 401).');
-            }
             throw new Error(`Error HTTP: ${response.status}`);
         }
         
         const data = await response.json();
-
-        if (data.status === 'error') {
-            throw new Error(`News API Error: ${data.code} - ${data.message}`);
-        }
         
-        displayNews(data.articles);
+        displayNeighbors(data);
 
     } catch (error) {
-        console.error('Error al obtener las noticias:', error);
-        newsListElement.innerHTML = `<li>Error al cargar noticias. (${error.message})</li>`;
+        console.error('Error al obtener países vecinos:', error);
+        neighborsListElement.innerHTML = `<li>Error al cargar la lista de vecinos.</li>`;
     }
 }
 
-function displayNews(articles) {
-    newsListElement.innerHTML = ''; 
+function displayNeighbors(neighborCountries) {
+    neighborsListElement.innerHTML = ''; 
 
-    if (articles.length === 0) {
-        newsListElement.innerHTML = '<li>No se encontraron noticias principales en español para este país.</li>';
-        return;
-    }
-
-    articles.forEach(article => {
+    neighborCountries.forEach(country => {
         const listItem = document.createElement('li');
-        const link = document.createElement('a');
-        link.href = article.url;
-        link.target = '_blank'; 
-        link.textContent = article.title;
-        
-        listItem.appendChild(link);
-        newsListElement.appendChild(listItem);
+        listItem.textContent = country.name.common;
+        neighborsListElement.appendChild(listItem);
     });
 }
 
